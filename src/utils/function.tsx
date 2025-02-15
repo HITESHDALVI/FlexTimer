@@ -3,7 +3,7 @@ import {TimerType} from '../context/BackgroundContext';
 export const formatTime = (seconds: string) => {
   const minutes = Math.floor(parseFloat(seconds) / 60);
   const sec = parseFloat(seconds) % 60;
-  return `${minutes}:${sec < 10 ? '0' : ''}${sec}`;
+  return `${minutes}:${sec < 10 ? '0' : ''}${sec.toFixed(2)}`;
 };
 
 export const getStatusStyle = (status: 'Running' | 'Paused' | 'Completed') => {

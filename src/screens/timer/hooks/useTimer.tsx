@@ -16,14 +16,19 @@ export const useTimer = ({navigation}: {navigation: any}) => {
   const [state, setState] = useState(initialState);
 
   const handleTimer = () => {
+    const checkDuration = /\s/.test(state?.duration);
+    console.log({checkDuration});
     if (
       state?.name === '' ||
+      state?.duration === '' ||
       state?.category === '' ||
-      state?.category === ''
+      checkDuration
     ) {
       setState(prev => ({
         ...prev,
-        error: 'Please enter above fields',
+        error: checkDuration
+          ? 'Duration can have only numbers'
+          : 'Please enter above fields',
       }));
     } else {
       addTimer(state?.name, state?.duration, state?.category);

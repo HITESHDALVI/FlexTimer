@@ -1,6 +1,7 @@
 import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useRef,
   useState,
@@ -68,19 +69,20 @@ const BackgroundProvider: React.FC<{
   };
   const intervalIdRef = useRef(null);
 
-  const startTimer = (id: string | number) => {
+  const startTimer = useCallback((id: string | number) => {
     setTimers(prevTimers =>
       prevTimers.map(timer =>
         timer.id === id ? {...timer, status: 'Running'} : timer,
       ),
     );
 
-    intervalIdRef.current = setInterval(() => {
+    const newInterval = setInterval(() => {
       setTimers(prevTimers => {
         return prevTimers.map(timer => {
           if (timer.id === id) {
             if (timer.remainingTime > 1) {
               const newTime = timer.remainingTime - 1;
+
               if (
                 newTime === Math.floor(timer.duration / 2) &&
                 !timer.halfwayAlert
@@ -92,11 +94,11 @@ const BackgroundProvider: React.FC<{
                 });
                 return {...timer, remainingTime: newTime, halfwayAlert: true};
               }
-              return {...timer, remainingTime: newTime};
-            } else if (timer?.remainingTime === 1) {
-              clearInterval(intervalIdRef?.current);
-              handleTimerCompletion(timer);
 
+              return {...timer, remainingTime: newTime};
+            } else if (timer.remainingTime === 1) {
+              clearInterval(newInterval);
+              handleTimerCompletion(timer);
               return {...timer, remainingTime: 0, status: 'Completed'};
             }
           }
@@ -107,9 +109,10 @@ const BackgroundProvider: React.FC<{
 
     setIntervals(prevIntervals => ({
       ...prevIntervals,
-      [id]: intervalIdRef.current,
+      [id]: newInterval,
     }));
-  };
+  }, []);
+
   const handleTimerCompletion = async timer => {
     setCompletedTimer(timer);
     setModalVisible(true);
@@ -132,19 +135,20 @@ const BackgroundProvider: React.FC<{
       console.error('Error saving timer history:', error);
     }
   };
-
   const pauseTimer = (id: string | number) => {
     setTimers(prevTimers =>
       prevTimers.map(timer => {
         if (timer.id === id) {
-          clearInterval(intervals[id]);
+          if (intervals[id]) {
+            clearInterval(intervals[id]);
+            delete intervals[id];
+          }
           return {...timer, status: 'Paused'};
         }
         return timer;
       }),
     );
   };
-
   const resetTimer = (id: string | number) => {
     setTimers(prevTimers =>
       prevTimers.map(timer => {
@@ -180,17 +184,36 @@ const BackgroundProvider: React.FC<{
   };
 
   const pauseAllTimersInCategory = category => {
-    timers
-      .filter(
-        timer => timer.category === category && timer.status === 'Running',
-      )
-      .forEach(timer => pauseTimer(timer.id));
+    const newIntervals = {...intervals};
+
+    setTimers(prevTimers =>
+      prevTimers.map(timer => {
+        if (timer.category === category && timer.status === 'Running') {
+          clearInterval(newIntervals[timer.id]);
+          delete newIntervals[timer.id];
+          return {...timer, status: 'Paused'};
+        }
+        return timer;
+      }),
+    );
+
+    setIntervals(newIntervals);
   };
 
   const resetAllTimersInCategory = category => {
-    timers
-      .filter(timer => timer.category === category)
-      .forEach(timer => resetTimer(timer.id));
+    const newIntervals = {...intervals};
+    setTimers(prevTimers =>
+      prevTimers.map(timer => {
+        if (timer.category === category) {
+          clearInterval(newIntervals[timer.id]);
+          delete newIntervals[timer.id];
+          return {...timer, remainingTime: timer.duration, status: 'Paused'};
+        }
+        return timer;
+      }),
+    );
+
+    setIntervals(newIntervals);
   };
 
   return (

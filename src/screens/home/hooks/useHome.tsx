@@ -2,7 +2,7 @@ import {useEffect} from 'react';
 import {useBackground} from '../../../context/BackgroundContext';
 
 export const useHome = ({navigation}: any) => {
-  const {timers, setTimers, loadLocalData} = useBackground();
+  const {timers, loadLocalData} = useBackground();
 
   const handleAddTimer = () => {
     navigation.navigate('AddTimer');
@@ -14,6 +14,5 @@ export const useHome = ({navigation}: any) => {
   return {
     handleAddTimer,
     timers,
-    setTimers,
   };
 };

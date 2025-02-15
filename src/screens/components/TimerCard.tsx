@@ -7,19 +7,20 @@ import {timerCardstyles} from '../timer/styles/timerCardstyles';
 import LinearGradient from 'react-native-linear-gradient';
 type Props = {category: TimerType};
 
-const TimerCardComponent = ({category, groupedTimers}: Props) => {
+const TimerCardComponent = ({
+  category,
+  groupedTimers,
+  startTimer,
+  pauseTimer,
+  resetTimer,
+  startAllTimersInCategory,
+  pauseAllTimersInCategory,
+  resetAllTimersInCategory,
+}: Props) => {
   const [expandedCategories, setExpandedCategories] = useState<
     Record<string, boolean>
   >({});
 
-  const {
-    startTimer,
-    pauseTimer,
-    resetTimer,
-    startAllTimersInCategory,
-    pauseAllTimersInCategory,
-    resetAllTimersInCategory,
-  } = useBackground();
   const toggleCategory = useCallback((category: string) => {
     setExpandedCategories(prev => ({
       ...prev,
@@ -32,31 +33,37 @@ const TimerCardComponent = ({category, groupedTimers}: Props) => {
       {
         icon: 'play',
         iconType: 'Ionicons',
-        onPress: () => startAllTimersInCategory(category),
+        onPress: () => {
+          startAllTimersInCategory(category);
+        },
       },
       {
         icon: 'pause',
         iconType: 'Ionicons',
-        onPress: () => pauseAllTimersInCategory(category),
+        onPress: () => {
+          pauseAllTimersInCategory(category);
+        },
       },
       {
         icon: 'clock-rotate-left',
         iconType: 'FontAwesome6',
-        onPress: () => resetAllTimersInCategory(category),
+        onPress: () => {
+          resetAllTimersInCategory(category);
+        },
       },
     ],
-    [
-      category,
-      startAllTimersInCategory,
-      pauseAllTimersInCategory,
-      resetAllTimersInCategory,
-    ],
+    [category],
+  );
+  const play = groupedTimers?.[category]?.some(
+    item => item?.status === 'Paused',
   );
 
   return (
     <View style={timerCardstyles.categoryContainer}>
       <TouchableOpacity
-        onPress={() => toggleCategory(category)}
+        onPress={() => {
+          toggleCategory(category);
+        }}
         style={timerCardstyles.categoryHeader}>
         <CustomIcon
           name={expandedCategories[category] ? 'chevron-down' : 'chevron-right'}
@@ -69,20 +76,22 @@ const TimerCardComponent = ({category, groupedTimers}: Props) => {
 
       <View style={timerCardstyles.container}>
         {buttonData.map(button => (
-          <TouchableOpacity
-            key={button.icon}
-            onPress={button.onPress}
-            style={timerCardstyles.button}>
-            <CustomIcon
-              type={button.iconType as CustomIconTypes}
-              name={button.icon}
-              color="#7149C6"
-              size={18}
-            />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              disabled={!play && button?.icon === 'play'}
+              key={button.icon}
+              onPress={button.onPress}
+              style={timerCardstyles.button}>
+              <CustomIcon
+                type={button.iconType as CustomIconTypes}
+                name={button.icon}
+                color="#7149C6"
+                size={18}
+              />
+            </TouchableOpacity>
+          </>
         ))}
       </View>
-
       {expandedCategories[category] &&
         groupedTimers[category]?.map(item => (
           <MemoizedTimerItem
@@ -115,7 +124,7 @@ const TimerItem = ({item, startTimer, pauseTimer, resetTimer}) => {
   return (
     <View style={timerCardstyles.timerCard}>
       <Text style={timerCardstyles.timerName}>{item.name}</Text>
-      <Text>{formatTime(item?.duration)}</Text>
+      <Text>Duration: {formatTime(item?.duration)}</Text>
       <Text style={timerCardstyles.timerInfo}>
         Time Left: {formatTime(item.remainingTime ?? item?.duration)}
       </Text>
@@ -137,7 +146,9 @@ const TimerItem = ({item, startTimer, pauseTimer, resetTimer}) => {
         {item.status !== 'Running' && (
           <TouchableOpacity
             disabled={item.status === 'Completed'}
-            onPress={() => startTimer(item.id)}
+            onPress={() => {
+              startTimer(item.id);
+            }}
             style={[
               timerCardstyles.button,
               timerCardstyles.startButton,
@@ -151,13 +162,17 @@ const TimerItem = ({item, startTimer, pauseTimer, resetTimer}) => {
         )}
         {item.status === 'Running' && (
           <TouchableOpacity
-            onPress={() => pauseTimer(item.id)}
+            onPress={() => {
+              pauseTimer(item.id);
+            }}
             style={[timerCardstyles.button, timerCardstyles.pauseButton]}>
             <Text style={timerCardstyles.buttonText}>Pause</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          onPress={() => resetTimer(item.id)}
+          onPress={() => {
+            resetTimer(item.id);
+          }}
           style={[timerCardstyles.button, timerCardstyles.resetButton]}>
           <Text style={timerCardstyles.buttonText}>Reset</Text>
         </TouchableOpacity>
